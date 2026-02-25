@@ -198,7 +198,7 @@ cargo run -p rtsp_client --features video-display -- rtsp://127.0.0.1:8554/test
 ```
 
 `video-display` feature を有効にすると [shiguredo_openh264](https://github.com/shiguredo/openh264-rs) で H.264 をデコードし、
-[raw_player](https://github.com/shiguredo/raw-player-rs) (SDL2) でウィンドウに映像を表示します。
+[raw_player](https://github.com/shiguredo/raw-player-rs) (SDL3) でウィンドウに映像を表示します。
 デフォルトでは無効のため、これらの依存は不要です。
 
 ## 規格書
