@@ -1,0 +1,20 @@
+[package]
+name = "shiguredo_rtsp"
+version = "2026.0.0"
+edition = "2024"
+rust-version = "1.88"
+authors = ["Shiguredo Inc."]
+license = "Apache-2.0"
+description = "Sans I/O RTSP/1.0 Library"
+homepage = "https://github.com/shiguredo/rtsp-rs"
+repository = "https://github.com/shiguredo/rtsp-rs"
+readme = "README.md"
+include = ["/src/**", "/LICENSE", "/README.md"]
+
+[dependencies]
+shiguredo_http11 = { version = "2026.1.0-canary.9" }
+md-5 = "0.10"
+
+[workspace]
+members = ["examples/rtsp_client", "pbt"]
+exclude = ["fuzz"]

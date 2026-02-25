@@ -1,0 +1,17 @@
+[package]
+name = "rtsp_client"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[features]
+video-display = ["dep:shiguredo_openh264", "dep:raw_player"]
+
+[dependencies]
+shiguredo_rtsp = { path = "../.." }
+shiguredo_http11 = "2026.1.0-canary.9"
+shiguredo_mp4 = "2026.2.0-canary.2"
+shiguredo_openh264 = { version = "2026.1.0-canary.0", optional = true }
+raw_player = { version = "2026.1.0-canary.0", optional = true }
+base64 = "0.22"

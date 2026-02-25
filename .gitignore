@@ -1,0 +1,11 @@
+target/
+
+# Agents
+.claude/
+.codex/
+
+# macOS
+.DS_Store
+
+*.dylib
+*.mp4

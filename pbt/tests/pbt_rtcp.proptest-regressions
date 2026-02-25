@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc c4a60f569c1637986b24b22eb47dd987c2c39d0abbe9cc291f29bc12ef391fbf # shrinks to sdes = RtcpSdes { chunks: [RtcpSdesChunk { ssrc: 0, items: [Cname("0")] }, RtcpSdesChunk { ssrc: 0, items: [Cname("A")] }] }

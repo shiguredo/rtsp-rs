@@ -1,0 +1,72 @@
+[package]
+name = "shiguredo_rtsp_fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.shiguredo_rtsp]
+path = ".."
+
+[[bin]]
+name = "fuzz_http_request"
+path = "fuzz_targets/fuzz_http_request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_http_response"
+path = "fuzz_targets/fuzz_http_response.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_rtp"
+path = "fuzz_targets/fuzz_rtp.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_rtcp"
+path = "fuzz_targets/fuzz_rtcp.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sdp"
+path = "fuzz_targets/fuzz_sdp.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_interleaved"
+path = "fuzz_targets/fuzz_interleaved.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_rtsp_client"
+path = "fuzz_targets/fuzz_rtsp_client.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_rtsp_limits"
+path = "fuzz_targets/fuzz_rtsp_limits.rs"
+test = false
+doc = false
+bench = false
