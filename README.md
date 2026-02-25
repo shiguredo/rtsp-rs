@@ -1,5 +1,10 @@
 # rtsp-rs
 
+[![shiguredo_rtsp](https://img.shields.io/crates/v/shiguredo_rtsp.svg)](https://crates.io/crates/shiguredo_rtsp)
+[![Documentation](https://docs.rs/shiguredo_rtsp/badge.svg)](https://docs.rs/shiguredo_rtsp)
+[![GitHub Actions](https://github.com/shiguredo/rtsp-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/shiguredo/rtsp-rs/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 ## About Shiguredo's open source software
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
