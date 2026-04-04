@@ -12,7 +12,7 @@ readme = "README.md"
 include = ["/src/**", "/LICENSE", "/README.md"]
 
 [dependencies]
-shiguredo_http11 = { version = "2026.1.0-canary.9" }
+shiguredo_http11 = { version = "2026.1.1" }
 md-5 = "0.10"
 
 [workspace]
