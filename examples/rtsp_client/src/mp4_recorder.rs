@@ -153,6 +153,7 @@ impl Mp4Recorder {
             keyframe: true,
             timescale: NonZeroU32::new(self.aac_sample_rate).expect("サンプルレートは非ゼロ"),
             duration: AAC_SAMPLES_PER_FRAME,
+            composition_time_offset: None,
             data_offset: self.file_position,
             data_size: frame.data.len(),
         };
@@ -184,6 +185,7 @@ impl Mp4Recorder {
             keyframe,
             timescale: NonZeroU32::new(VIDEO_TIMESCALE).expect("非ゼロ"),
             duration,
+            composition_time_offset: None,
             data_offset: self.file_position,
             data_size: data.len(),
         };
