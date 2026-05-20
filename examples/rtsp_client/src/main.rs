@@ -528,19 +528,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     }
                                 }
                             }
-                            Some(t) => {
-                                if rtp_count % 100 == 1 {
-                                    println!(
-                                        "RTP [{}] ch={} seq={} ts={} pt={} (total: {})",
-                                        t.media_type,
-                                        channel,
-                                        packet.header.sequence_number,
-                                        packet.header.timestamp,
-                                        packet.header.payload_type,
-                                        rtp_count
-                                    );
-                                }
+                            Some(t) if rtp_count % 100 == 1 => {
+                                println!(
+                                    "RTP [{}] ch={} seq={} ts={} pt={} (total: {})",
+                                    t.media_type,
+                                    channel,
+                                    packet.header.sequence_number,
+                                    packet.header.timestamp,
+                                    packet.header.payload_type,
+                                    rtp_count
+                                );
                             }
+                            Some(_) => {}
                             None => {}
                         }
                     }

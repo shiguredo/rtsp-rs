@@ -1,5 +1,6 @@
 use crate::error::Error;
 use crate::rtsp_method::RtspMethod;
+use shiguredo_http11::HttpHead;
 
 /// RTSP リクエスト
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,32 +75,38 @@ impl RtspRequest {
     /// HTTP リクエストから変換
     pub fn from_http(request: shiguredo_http11::Request) -> Self {
         let method: RtspMethod = request
-            .method
+            .method()
             .parse()
             .unwrap_or_else(|e: std::convert::Infallible| match e {});
         Self {
             method,
-            uri: request.uri,
-            version: request.version,
-            headers: request.headers,
-            body: request.body,
+            uri: request.uri().to_string(),
+            version: request.version().to_string(),
+            headers: request.headers().to_vec(),
+            body: request.body_bytes().unwrap_or_default().to_vec(),
         }
     }
 
     /// HTTP リクエストに変換
-    pub fn to_http(&self) -> shiguredo_http11::Request {
-        shiguredo_http11::Request {
-            method: self.method.to_string(),
-            uri: self.uri.clone(),
-            version: self.version.clone(),
-            headers: self.headers.clone(),
-            body: self.body.clone(),
+    pub fn to_http(&self) -> Result<shiguredo_http11::Request, shiguredo_http11::EncodeError> {
+        let mut request = shiguredo_http11::Request::with_version(
+            self.method.to_string(),
+            &self.uri,
+            &self.version,
+        )?;
+        for (name, value) in &self.headers {
+            request = request.header(name, value)?;
         }
+        Ok(if self.body.is_empty() {
+            request
+        } else {
+            request.body(self.body.clone())
+        })
     }
 
     /// バイト列にエンコード
     pub fn encode(&self) -> Result<Vec<u8>, Error> {
-        Ok(shiguredo_http11::encode_request(&self.to_http())?)
+        Ok(shiguredo_http11::encode_request(&self.to_http()?)?)
     }
 }
 

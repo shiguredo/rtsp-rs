@@ -111,7 +111,7 @@ proptest! {
         let result = decoder.decode();
         prop_assert!(result.is_ok());
         let req = result.unwrap().unwrap();
-        prop_assert_eq!(req.body.len(), body_size);
+        prop_assert_eq!(req.body_bytes().map(<[_]>::len).unwrap_or(0), body_size);
     }
 
     /// ヘッダー行サイズ制限を超えるとエラーになることを確認
@@ -200,9 +200,11 @@ proptest! {
         header_count in 0usize..3usize,
         body_size in 0usize..100usize
     ) {
-        let mut request = Request::with_version(&method, &uri, "RTSP/1.0");
+        let mut request = Request::with_version(&method, &uri, "RTSP/1.0").unwrap();
         for i in 0..header_count {
-            request = request.header(&format!("H{}", i), &format!("v{}", i));
+            request = request
+                .header(format!("H{}", i), format!("v{}", i))
+                .unwrap();
         }
         if body_size > 0 {
             request = request.body(vec![b'x'; body_size]);
@@ -223,12 +225,16 @@ proptest! {
         header_count in 0usize..3usize,
         body_size in 0usize..100usize
     ) {
-        let mut response = Response::with_version("RTSP/1.0", status_code, "OK");
+        let mut response = Response::with_version("RTSP/1.0", status_code, "OK").unwrap();
         for i in 0..header_count {
-            response = response.header(&format!("H{}", i), &format!("v{}", i));
+            response = response
+                .header(format!("H{}", i), format!("v{}", i))
+                .unwrap();
         }
         if body_size > 0 {
             response = response.body(vec![b'x'; body_size]);
+        } else {
+            response = response.body(Vec::new());
         }
 
         let encoded = encode_response(&response).unwrap();

@@ -136,11 +136,8 @@ fn split_rtp_info_streams(s: &str) -> Vec<&str> {
 
     for (i, c) in s.char_indices() {
         match c {
-            '=' if !in_url => {
-                // url= の後
-                if s[start..i].trim().ends_with("url") {
-                    in_url = true;
-                }
+            '=' if !in_url && s[start..i].trim().ends_with("url") => {
+                in_url = true;
             }
             ';' if in_url => {
                 in_url = false;

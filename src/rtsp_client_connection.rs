@@ -178,10 +178,11 @@ impl RtspClientConnection {
 
                 while let Some(http_response) = self.decode_rtsp_response()? {
                     // RTSP バージョンを検証
-                    if self.limits.validate_version && !http_response.version.starts_with("RTSP/") {
+                    if self.limits.validate_version && !http_response.version().starts_with("RTSP/")
+                    {
                         return Err(Error::invalid_data(format!(
                             "invalid RTSP version: {}",
-                            http_response.version
+                            http_response.version()
                         )));
                     }
 
@@ -429,15 +430,13 @@ impl RtspClientConnection {
                         let len = data.len();
                         match self.http_decoder.consume_body(len)? {
                             BodyProgress::Complete { .. } => break,
-                            BodyProgress::Continue => continue,
+                            BodyProgress::Advanced | BodyProgress::NeedData => continue,
                         }
                     }
                     match self.http_decoder.progress()? {
                         BodyProgress::Complete { .. } => break,
-                        BodyProgress::Continue => {
-                            if self.http_decoder.peek_body().is_some() {
-                                continue;
-                            }
+                        BodyProgress::Advanced => continue,
+                        BodyProgress::NeedData => {
                             // データ不足: ヘッダーはデコード済みだが
                             // ボディが不完全な状態は RTSP では発生しにくいが、
                             // 安全のため空ボディで返す
@@ -454,6 +453,7 @@ impl RtspClientConnection {
                 Vec::new()
             }
             BodyKind::Tunnel => Vec::new(),
+            _ => Vec::new(),
         };
 
         // デコーダーをリセットして次のレスポンスに備える
@@ -468,13 +468,15 @@ impl RtspClientConnection {
             }
         }
 
-        Ok(Some(Response {
-            version: head.version,
-            status_code: head.status_code,
-            reason_phrase: head.reason_phrase,
-            headers: head.headers,
-            body,
-            omit_body: false,
+        let mut response =
+            Response::with_version(head.version(), head.status_code(), head.reason_phrase())?;
+        for (name, value) in head.headers() {
+            response = response.header(name, value)?;
+        }
+        Ok(Some(if body.is_empty() {
+            response
+        } else {
+            response.body(body)
         }))
     }
 

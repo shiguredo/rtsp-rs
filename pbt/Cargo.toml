@@ -5,8 +5,8 @@ edition = "2024"
 publish = false
 
 [dependencies]
-proptest = "1.10"
+proptest = "1.11"
 
 [dev-dependencies]
-shiguredo_http11 = { version = "2026.1.0-canary.9" }
+shiguredo_http11 = { version = "2026.5.0" }
 shiguredo_rtsp = { path = "../" }

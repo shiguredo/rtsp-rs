@@ -1,7 +1,43 @@
 use proptest::prelude::*;
 use shiguredo_http11::{
-    Request, RequestDecoder, Response, ResponseDecoder, encode_request, encode_response,
+    HttpHead, Request, RequestDecoder, Response, ResponseDecoder, encode_request, encode_response,
 };
+
+fn build_request(
+    method: &str,
+    uri: &str,
+    version: &str,
+    headers: &[(String, String)],
+    body: Option<Vec<u8>>,
+) -> Request {
+    let mut request = Request::with_version(method, uri, version).unwrap();
+    for (name, value) in headers {
+        request = request.header(name, value).unwrap();
+    }
+    if let Some(body) = body {
+        request = request.body(body);
+    }
+    request
+}
+
+fn build_response(
+    version: &str,
+    status_code: u16,
+    reason_phrase: &str,
+    headers: &[(String, String)],
+    body: Option<Vec<u8>>,
+) -> Response {
+    let mut response = Response::with_version(version, status_code, reason_phrase).unwrap();
+    for (name, value) in headers {
+        response = response.header(name, value).unwrap();
+    }
+    if let Some(body) = body {
+        response = response.body(body);
+    } else {
+        response = response.body(Vec::new());
+    }
+    response
+}
 
 /// 有効な HTTP トークン文字列を生成 (制御文字やセパレータを除く)
 fn valid_token() -> impl Strategy<Value = String> {
@@ -83,13 +119,7 @@ proptest! {
         version in valid_version(),
         headers in valid_headers(),
     ) {
-        let request = Request {
-            method: method.clone(),
-            uri: uri.clone(),
-            version: version.clone(),
-            headers: headers.clone(),
-            body: vec![],
-        };
+        let request = build_request(&method, &uri, &version, &headers, None);
 
         let encoded = encode_request(&request).unwrap();
         let mut decoder = RequestDecoder::new();
@@ -97,12 +127,12 @@ proptest! {
 
         let decoded = decoder.decode().unwrap().unwrap();
 
-        prop_assert_eq!(&decoded.method, &method);
-        prop_assert_eq!(&decoded.uri, &uri);
-        prop_assert_eq!(&decoded.version, &version);
+        prop_assert_eq!(decoded.method(), &method);
+        prop_assert_eq!(decoded.uri(), &uri);
+        prop_assert_eq!(decoded.version(), &version);
         // ボディなしの場合、エンコーダーは Content-Length を追加しない
-        prop_assert_eq!(decoded.headers.len(), headers.len());
-        prop_assert!(decoded.body.is_empty());
+        prop_assert_eq!(decoded.headers().len(), headers.len());
+        prop_assert!(decoded.body_bytes().unwrap_or(&[]).is_empty());
     }
 
     /// HTTP リクエストの encode/decode ラウンドトリップ (ボディあり)
@@ -114,13 +144,7 @@ proptest! {
         headers in valid_headers(),
         body in prop::collection::vec(any::<u8>(), 1..256),
     ) {
-        let request = Request {
-            method: method.clone(),
-            uri: uri.clone(),
-            version: version.clone(),
-            headers: headers.clone(),
-            body: body.clone(),
-        };
+        let request = build_request(&method, &uri, &version, &headers, Some(body.clone()));
 
         let encoded = encode_request(&request).unwrap();
         let mut decoder = RequestDecoder::new();
@@ -128,12 +152,12 @@ proptest! {
 
         let decoded = decoder.decode().unwrap().unwrap();
 
-        prop_assert_eq!(&decoded.method, &method);
-        prop_assert_eq!(&decoded.uri, &uri);
-        prop_assert_eq!(&decoded.version, &version);
-        prop_assert_eq!(&decoded.body, &body);
+        prop_assert_eq!(decoded.method(), &method);
+        prop_assert_eq!(decoded.uri(), &uri);
+        prop_assert_eq!(decoded.version(), &version);
+        prop_assert_eq!(decoded.body_bytes(), Some(body.as_slice()));
         // エンコーダーが Content-Length を自動追加するため +1
-        prop_assert_eq!(decoded.headers.len(), headers.len() + 1);
+        prop_assert_eq!(decoded.headers().len(), headers.len() + 1);
     }
 
     /// HTTP レスポンスの encode/decode ラウンドトリップ (ボディなし)
@@ -144,14 +168,7 @@ proptest! {
         reason_phrase in valid_reason_phrase(),
         headers in valid_headers(),
     ) {
-        let response = Response {
-            version: version.clone(),
-            status_code,
-            reason_phrase: reason_phrase.clone(),
-            headers: headers.clone(),
-            body: vec![],
-            omit_body: false,
-        };
+        let response = build_response(&version, status_code, &reason_phrase, &headers, None);
 
         let encoded = encode_response(&response).unwrap();
         let mut decoder = ResponseDecoder::new();
@@ -159,12 +176,12 @@ proptest! {
 
         let decoded = decoder.decode().unwrap().unwrap();
 
-        prop_assert_eq!(&decoded.version, &version);
-        prop_assert_eq!(decoded.status_code, status_code);
-        prop_assert_eq!(&decoded.reason_phrase, &reason_phrase);
+        prop_assert_eq!(decoded.version(), &version);
+        prop_assert_eq!(decoded.status_code(), status_code);
+        prop_assert_eq!(decoded.reason_phrase(), &reason_phrase);
         // エンコーダーが Content-Length: 0 を自動追加するため +1
-        prop_assert_eq!(decoded.headers.len(), headers.len() + 1);
-        prop_assert!(decoded.body.is_empty());
+        prop_assert_eq!(decoded.headers().len(), headers.len() + 1);
+        prop_assert!(decoded.body_bytes().unwrap_or(&[]).is_empty());
     }
 
     /// HTTP レスポンスの encode/decode ラウンドトリップ (ボディあり)
@@ -176,14 +193,13 @@ proptest! {
         headers in valid_headers(),
         body in prop::collection::vec(any::<u8>(), 1..256),
     ) {
-        let response = Response {
-            version: version.clone(),
+        let response = build_response(
+            &version,
             status_code,
-            reason_phrase: reason_phrase.clone(),
-            headers: headers.clone(),
-            body: body.clone(),
-            omit_body: false,
-        };
+            &reason_phrase,
+            &headers,
+            Some(body.clone()),
+        );
 
         let encoded = encode_response(&response).unwrap();
         let mut decoder = ResponseDecoder::new();
@@ -191,12 +207,12 @@ proptest! {
 
         let decoded = decoder.decode().unwrap().unwrap();
 
-        prop_assert_eq!(&decoded.version, &version);
-        prop_assert_eq!(decoded.status_code, status_code);
-        prop_assert_eq!(&decoded.reason_phrase, &reason_phrase);
-        prop_assert_eq!(&decoded.body, &body);
+        prop_assert_eq!(decoded.version(), &version);
+        prop_assert_eq!(decoded.status_code(), status_code);
+        prop_assert_eq!(decoded.reason_phrase(), &reason_phrase);
+        prop_assert_eq!(decoded.body_bytes(), Some(body.as_slice()));
         // エンコーダーが Content-Length を自動追加するため +1
-        prop_assert_eq!(decoded.headers.len(), headers.len() + 1);
+        prop_assert_eq!(decoded.headers().len(), headers.len() + 1);
     }
 
     /// 分割されたデータでもパースできることを確認
@@ -205,12 +221,12 @@ proptest! {
         method in valid_token(),
         uri in valid_uri(),
     ) {
-        let request = Request::with_version(&method, &uri, "RTSP/1.0");
+        let request = Request::with_version(&method, &uri, "RTSP/1.0").unwrap();
         let encoded = encode_request(&request).unwrap();
 
         let mut decoder = RequestDecoder::new();
 
-        // 1バイトずつ feed
+        // 1 バイトずつ feed
         for (i, byte) in encoded.iter().enumerate() {
             decoder.feed(&[*byte]).unwrap();
             let result = decoder.decode();
@@ -221,8 +237,8 @@ proptest! {
             } else {
                 // 最後のバイトで完了
                 let decoded = result.unwrap().unwrap();
-                prop_assert_eq!(&decoded.method, &method);
-                prop_assert_eq!(&decoded.uri, &uri);
+                prop_assert_eq!(decoded.method(), &method);
+                prop_assert_eq!(decoded.uri(), &uri);
             }
         }
     }

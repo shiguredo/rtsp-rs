@@ -1,5 +1,6 @@
 use crate::error::Error;
 use crate::rtsp_header::RtspStatusCode;
+use shiguredo_http11::HttpHead;
 
 /// RTSP レスポンス
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -121,29 +122,34 @@ impl RtspResponse {
     /// HTTP レスポンスから変換
     pub fn from_http(response: shiguredo_http11::Response) -> Self {
         Self {
-            version: response.version,
-            status_code: response.status_code,
-            reason_phrase: response.reason_phrase,
-            headers: response.headers,
-            body: response.body,
+            version: response.version().to_string(),
+            status_code: response.status_code(),
+            reason_phrase: response.reason_phrase().to_string(),
+            headers: response.headers().to_vec(),
+            body: response.body_bytes().unwrap_or_default().to_vec(),
         }
     }
 
     /// HTTP レスポンスに変換
-    pub fn to_http(&self) -> shiguredo_http11::Response {
-        shiguredo_http11::Response {
-            version: self.version.clone(),
-            status_code: self.status_code,
-            reason_phrase: self.reason_phrase.clone(),
-            headers: self.headers.clone(),
-            body: self.body.clone(),
-            omit_body: false,
+    pub fn to_http(&self) -> Result<shiguredo_http11::Response, shiguredo_http11::EncodeError> {
+        let mut response = shiguredo_http11::Response::with_version(
+            &self.version,
+            self.status_code,
+            &self.reason_phrase,
+        )?;
+        for (name, value) in &self.headers {
+            response = response.header(name, value)?;
         }
+        Ok(if self.body.is_empty() {
+            response.body(Vec::new())
+        } else {
+            response.body(self.body.clone())
+        })
     }
 
     /// バイト列にエンコード
     pub fn encode(&self) -> Result<Vec<u8>, Error> {
-        Ok(shiguredo_http11::encode_response(&self.to_http())?)
+        Ok(shiguredo_http11::encode_response(&self.to_http()?)?)
     }
 }
 
