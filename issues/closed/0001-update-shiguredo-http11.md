@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-24
+- Completed: 2026-06-24
 - Model: Sonnet 4.6
 - Branch: feature/update-shiguredo-http11
 - Polished: 2026-06-24
@@ -51,3 +52,17 @@ crates.io での最新バージョンは `2026.6.1`。
 - `cargo build --workspace` が成功する
 - `cargo test --workspace` が成功する（PBT を含む）
 - `CHANGES.md` の `## develop` セクションに `[UPDATE] shiguredo_http11 を v2026.6.1 に更新する` エントリが追記されている
+
+## 解決方法
+
+3 つの `Cargo.toml` のバージョン指定を `"2026.6"` に統一し、`cargo update -p shiguredo_http11` でロックファイルを更新した。
+
+v2026.6.1 では `headers()` の戻り型が `Vec<(String, String)>` から `&[(HeaderName, String)]` に変更され、`Method` と `HeaderName` が動的文字列からの `From` 実装を廃止して `::new()` による明示的な構築を要求するよう変わっていた。以下のファイルを修正した。
+
+- `src/rtsp_request.rs`: `Method::new()` で構築、`HeaderName::new()` で構築、`headers()` のマッピングを修正
+- `src/rtsp_response.rs`: 同上
+- `src/rtsp_client_connection.rs`: `name.clone()` を使用して `HeaderName` を渡すよう修正
+- `pbt/tests/pbt_http.rs`: 同様の API 変更対応
+- `pbt/tests/pbt_limits.rs`: 同様の API 変更対応
+
+コミット `d51a721` で対応済み。
