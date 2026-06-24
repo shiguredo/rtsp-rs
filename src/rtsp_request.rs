@@ -82,20 +82,23 @@ impl RtspRequest {
             method,
             uri: request.uri().to_string(),
             version: request.version().to_string(),
-            headers: request.headers().to_vec(),
+            headers: request
+                .headers()
+                .iter()
+                .map(|(n, v)| (n.to_string(), v.clone()))
+                .collect(),
             body: request.body_bytes().unwrap_or_default().to_vec(),
         }
     }
 
     /// HTTP リクエストに変換
     pub fn to_http(&self) -> Result<shiguredo_http11::Request, shiguredo_http11::EncodeError> {
-        let mut request = shiguredo_http11::Request::with_version(
-            self.method.to_string(),
-            &self.uri,
-            &self.version,
-        )?;
+        let method = shiguredo_http11::Method::new(self.method.to_string())?;
+        let mut request =
+            shiguredo_http11::Request::with_version(method, &self.uri, &self.version)?;
         for (name, value) in &self.headers {
-            request = request.header(name, value)?;
+            let header_name = shiguredo_http11::HeaderName::new(name.as_str())?;
+            request = request.header(header_name, value.as_str())?;
         }
         Ok(if self.body.is_empty() {
             request

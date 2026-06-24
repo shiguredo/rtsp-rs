@@ -125,7 +125,11 @@ impl RtspResponse {
             version: response.version().to_string(),
             status_code: response.status_code(),
             reason_phrase: response.reason_phrase().to_string(),
-            headers: response.headers().to_vec(),
+            headers: response
+                .headers()
+                .iter()
+                .map(|(n, v)| (n.to_string(), v.clone()))
+                .collect(),
             body: response.body_bytes().unwrap_or_default().to_vec(),
         }
     }
@@ -138,7 +142,8 @@ impl RtspResponse {
             &self.reason_phrase,
         )?;
         for (name, value) in &self.headers {
-            response = response.header(name, value)?;
+            let header_name = shiguredo_http11::HeaderName::new(name.as_str())?;
+            response = response.header(header_name, value.as_str())?;
         }
         Ok(if self.body.is_empty() {
             response.body(Vec::new())

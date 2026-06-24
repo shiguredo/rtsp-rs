@@ -471,7 +471,7 @@ impl RtspClientConnection {
         let mut response =
             Response::with_version(head.version(), head.status_code(), head.reason_phrase())?;
         for (name, value) in head.headers() {
-            response = response.header(name, value)?;
+            response = response.header(name.clone(), value.as_str())?;
         }
         Ok(Some(if body.is_empty() {
             response

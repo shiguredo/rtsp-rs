@@ -635,9 +635,9 @@ dependencies = [
 
 [[package]]
 name = "shiguredo_http11"
-version = "2026.5.0"
+version = "2026.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33d3ac49f07c211b152f7dc8940719c0ad8aa81bb2e04667e25e18b4ca073b39"
+checksum = "521929c2893005420ccee04aada685000c967cbcae36cd46117b40bf5495e5ab"
 
 [[package]]
 name = "shiguredo_mp4"

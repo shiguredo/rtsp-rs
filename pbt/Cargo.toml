@@ -8,5 +8,5 @@ publish = false
 proptest = "1.11"
 
 [dev-dependencies]
-shiguredo_http11 = { version = "2026.5.0" }
+shiguredo_http11 = { version = "2026.6" }
 shiguredo_rtsp = { path = "../" }

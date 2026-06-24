@@ -16,4 +16,4 @@ exclude = ["fuzz"]
 
 [dependencies]
 md-5 = "0.11"
-shiguredo_http11 = { version = "2026.5" }
+shiguredo_http11 = { version = "2026.6" }

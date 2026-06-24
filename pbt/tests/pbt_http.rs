@@ -1,6 +1,7 @@
 use proptest::prelude::*;
 use shiguredo_http11::{
-    HttpHead, Request, RequestDecoder, Response, ResponseDecoder, encode_request, encode_response,
+    HeaderName, HttpHead, Method, Request, RequestDecoder, Response, ResponseDecoder,
+    encode_request, encode_response,
 };
 
 fn build_request(
@@ -10,9 +11,11 @@ fn build_request(
     headers: &[(String, String)],
     body: Option<Vec<u8>>,
 ) -> Request {
+    let method = Method::new(method).unwrap();
     let mut request = Request::with_version(method, uri, version).unwrap();
     for (name, value) in headers {
-        request = request.header(name, value).unwrap();
+        let header_name = HeaderName::new(name.as_str()).unwrap();
+        request = request.header(header_name, value.as_str()).unwrap();
     }
     if let Some(body) = body {
         request = request.body(body);
@@ -29,7 +32,8 @@ fn build_response(
 ) -> Response {
     let mut response = Response::with_version(version, status_code, reason_phrase).unwrap();
     for (name, value) in headers {
-        response = response.header(name, value).unwrap();
+        let header_name = HeaderName::new(name.as_str()).unwrap();
+        response = response.header(header_name, value.as_str()).unwrap();
     }
     if let Some(body) = body {
         response = response.body(body);
@@ -221,7 +225,8 @@ proptest! {
         method in valid_token(),
         uri in valid_uri(),
     ) {
-        let request = Request::with_version(&method, &uri, "RTSP/1.0").unwrap();
+        let method = Method::new(method.as_str()).unwrap();
+        let request = Request::with_version(method.clone(), &uri, "RTSP/1.0").unwrap();
         let encoded = encode_request(&request).unwrap();
 
         let mut decoder = RequestDecoder::new();

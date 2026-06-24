@@ -1,7 +1,7 @@
 use proptest::prelude::*;
 use shiguredo_http11::{
-    DecoderLimits, Request, RequestDecoder, Response, ResponseDecoder, encode_request,
-    encode_response,
+    DecoderLimits, HeaderName, Method, Request, RequestDecoder, Response, ResponseDecoder,
+    encode_request, encode_response,
 };
 use shiguredo_rtsp::{RtspClientConnection, RtspConnectionLimits};
 
@@ -200,10 +200,12 @@ proptest! {
         header_count in 0usize..3usize,
         body_size in 0usize..100usize
     ) {
-        let mut request = Request::with_version(&method, &uri, "RTSP/1.0").unwrap();
+        let method = Method::new(method.as_str()).unwrap();
+        let mut request = Request::with_version(method, &uri, "RTSP/1.0").unwrap();
         for i in 0..header_count {
+            let header_name = HeaderName::new(format!("H{}", i)).unwrap();
             request = request
-                .header(format!("H{}", i), format!("v{}", i))
+                .header(header_name, format!("v{}", i))
                 .unwrap();
         }
         if body_size > 0 {
@@ -227,8 +229,9 @@ proptest! {
     ) {
         let mut response = Response::with_version("RTSP/1.0", status_code, "OK").unwrap();
         for i in 0..header_count {
+            let header_name = HeaderName::new(format!("H{}", i)).unwrap();
             response = response
-                .header(format!("H{}", i), format!("v{}", i))
+                .header(header_name, format!("v{}", i))
                 .unwrap();
         }
         if body_size > 0 {
