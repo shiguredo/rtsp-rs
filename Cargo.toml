@@ -2,7 +2,7 @@
 name = "shiguredo_rtsp"
 version = "2026.1.0-canary.1"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.93"
 description = "Sans I/O RTSP/1.0 Library"
 readme = "README.md"
 homepage = "https://github.com/shiguredo/rtsp-rs"
