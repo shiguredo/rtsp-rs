@@ -657,7 +657,7 @@ dependencies = [
 
 [[package]]
 name = "shiguredo_rtsp"
-version = "2026.1.0-canary.1"
+version = "2026.1.0-canary.2"
 dependencies = [
  "md-5",
  "shiguredo_http11",
