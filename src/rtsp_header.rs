@@ -263,11 +263,11 @@ pub enum RtspStatusCode {
 }
 
 impl RtspStatusCode {
-    pub fn code(&self) -> u16 {
-        *self as u16
+    pub fn code(self) -> u16 {
+        self as u16
     }
 
-    pub fn reason_phrase(&self) -> &'static str {
+    pub fn reason_phrase(self) -> &'static str {
         match self {
             RtspStatusCode::Continue => "Continue",
             RtspStatusCode::Ok => "OK",

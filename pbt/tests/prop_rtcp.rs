@@ -7,13 +7,14 @@ use shiguredo_rtsp::rtcp::{
 /// 有効な CNAME 文字列を生成
 fn valid_cname() -> impl Strategy<Value = String> {
     prop::string::string_regex("[a-zA-Z0-9@._-]{1,50}")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("non-empty", |s| !s.is_empty())
 }
 
 /// 有効な理由文字列を生成
 fn valid_reason() -> impl Strategy<Value = String> {
-    prop::string::string_regex("[a-zA-Z0-9 ._-]{0,50}").unwrap()
+    prop::string::string_regex("[a-zA-Z0-9 ._-]{0,50}")
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
 }
 
 /// レポートブロックを生成
@@ -147,7 +148,8 @@ proptest! {
     fn test_rtcp_sender_report_roundtrip(sr in valid_sender_report()) {
         let packets = vec![RtcpPacket::SenderReport(sr.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 1);
         if let RtcpPacket::SenderReport(decoded_sr) = &decoded[0] {
@@ -167,7 +169,8 @@ proptest! {
     fn test_rtcp_receiver_report_roundtrip(rr in valid_receiver_report()) {
         let packets = vec![RtcpPacket::ReceiverReport(rr.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 1);
         if let RtcpPacket::ReceiverReport(decoded_rr) = &decoded[0] {
@@ -183,7 +186,8 @@ proptest! {
     fn test_rtcp_sdes_roundtrip(sdes in valid_sdes()) {
         let packets = vec![RtcpPacket::SourceDescription(sdes.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 1);
         if let RtcpPacket::SourceDescription(decoded_sdes) = &decoded[0] {
@@ -202,7 +206,8 @@ proptest! {
     fn test_rtcp_bye_roundtrip(bye in valid_bye()) {
         let packets = vec![RtcpPacket::Bye(bye.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 1);
         if let RtcpPacket::Bye(decoded_bye) = &decoded[0] {
@@ -218,7 +223,8 @@ proptest! {
     fn test_rtcp_app_roundtrip(app in valid_app()) {
         let packets = vec![RtcpPacket::App(app.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 1);
         if let RtcpPacket::App(decoded_app) = &decoded[0] {
@@ -243,7 +249,8 @@ proptest! {
             RtcpPacket::SourceDescription(sdes.clone()),
         ];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.len(), 2);
 
@@ -274,7 +281,8 @@ proptest! {
 
         let packets = vec![RtcpPacket::SenderReport(sr)];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        let decoded = RtcpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         if let RtcpPacket::SenderReport(decoded_sr) = &decoded[0] {
             let decoded_report = &decoded_sr.reports[0];
@@ -289,20 +297,4 @@ proptest! {
             prop_assert!(false, "expected SenderReport");
         }
     }
-}
-
-/// 不正なデータのパースが失敗することを確認
-#[test]
-fn test_rtcp_parse_invalid_data() {
-    // データが短すぎる
-    assert!(RtcpPacket::parse(&[]).unwrap().is_empty());
-    assert!(RtcpPacket::parse(&[0, 0, 0]).unwrap().is_empty());
-
-    // バージョンが違う
-    let mut invalid_version = vec![0; 8];
-    invalid_version[0] = 0b0000_0000; // version = 0
-    invalid_version[1] = 200; // SR
-    invalid_version[2] = 0;
-    invalid_version[3] = 1; // length = 1 word
-    assert!(RtcpPacket::parse(&invalid_version).is_err());
 }

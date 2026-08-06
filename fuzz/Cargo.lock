@@ -132,13 +132,13 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "shiguredo_http11"
-version = "2026.5.0"
+version = "2026.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33d3ac49f07c211b152f7dc8940719c0ad8aa81bb2e04667e25e18b4ca073b39"
+checksum = "521929c2893005420ccee04aada685000c967cbcae36cd46117b40bf5495e5ab"
 
 [[package]]
 name = "shiguredo_rtsp"
-version = "2026.1.0-canary.0"
+version = "2026.1.0-canary.1"
 dependencies = [
  "md-5",
  "shiguredo_http11",
@@ -149,6 +149,7 @@ name = "shiguredo_rtsp_fuzz"
 version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
+ "shiguredo_http11",
  "shiguredo_rtsp",
 ]
 

@@ -825,7 +825,8 @@ a=rtpmap:97 MPEG4-GENERIC/44100/2
 a=control:trackID=2
 "#;
 
-        let sdp = Sdp::parse(sdp_text).unwrap();
+        // 有効な SDP なのでパースに失敗しない想定
+        let sdp = Sdp::parse(sdp_text).expect("有効な SDP なのでパースに失敗しない想定");
         assert_eq!(sdp.version, 0);
         assert_eq!(sdp.session_name, "Example");
         assert_eq!(sdp.media.len(), 2);
@@ -848,7 +849,8 @@ a=control:trackID=2
                     .build(),
             )
             .build()
-            .unwrap();
+            // ビルダーで生成した SDP は必ず妥当な状態になる想定
+            .expect("ビルダーで生成した SDP のビルドに失敗しない想定");
 
         let text = sdp.to_string();
         assert!(text.contains("v=0"));

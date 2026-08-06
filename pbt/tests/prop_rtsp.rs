@@ -27,11 +27,11 @@ fn valid_transport() -> impl Strategy<Value = RtspTransport> {
         ]),
         proptest::option::of(
             prop::string::string_regex("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")
-                .unwrap(),
+                .expect("有効な正規表現なのでコンパイルに失敗しない想定"),
         ),
         proptest::option::of(
             prop::string::string_regex("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")
-                .unwrap(),
+                .expect("有効な正規表現なのでコンパイルに失敗しない想定"),
         ),
         proptest::option::of(1..255u8),
     )
@@ -88,7 +88,7 @@ fn valid_smpte_time() -> impl Strategy<Value = SmpteTime> {
 /// 有効な拡張メソッド名を生成
 fn valid_extension_method() -> impl Strategy<Value = String> {
     prop::string::string_regex("[A-Z][A-Z_]{2,20}")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("not a standard method", |s| {
             !matches!(
                 s.as_str(),
@@ -155,7 +155,8 @@ proptest! {
         });
 
         let text = range.to_string();
-        let parsed = RtspRange::parse(&text).unwrap();
+        let parsed = RtspRange::parse(&text)
+            .expect("有効な Range なのでパースに失敗しない想定");
 
         if let RtspRange::Smpte(smpte) = parsed {
             prop_assert_eq!(smpte.smpte_type, smpte_type);
@@ -173,7 +174,8 @@ proptest! {
         });
 
         let text = range.to_string();
-        let parsed = RtspRange::parse(&text).unwrap();
+        let parsed = RtspRange::parse(&text)
+            .expect("有効な Range なのでパースに失敗しない想定");
 
         if let RtspRange::Npt(npt) = parsed {
             if let NptTime::Seconds(s) = npt.start {
@@ -189,7 +191,9 @@ proptest! {
     /// Extension メソッドのラウンドトリップ
     #[test]
     fn test_extension_method_roundtrip(name in valid_extension_method()) {
-        let method: RtspMethod = name.parse().unwrap();
+        let method: RtspMethod = name
+            .parse()
+            .expect("有効なメソッド名なのでパースに失敗しない想定");
 
         if let RtspMethod::Extension(ref ext_name) = method {
             prop_assert_eq!(ext_name, &name);
@@ -217,12 +221,17 @@ proptest! {
             Just("RECORD"),
         ],
     ) {
-        let method: RtspMethod = method_str.parse().unwrap();
+        let method: RtspMethod = method_str
+            .parse()
+            .expect("有効なメソッド名なのでパースに失敗しない想定");
         // 標準メソッドは Extension にならない
         prop_assert!(!matches!(method, RtspMethod::Extension(_)));
 
         // 小文字にすると Extension になる
-        let lower: RtspMethod = method_str.to_lowercase().parse().unwrap();
+        let lower: RtspMethod = method_str
+            .to_lowercase()
+            .parse()
+            .expect("有効なメソッド名なのでパースに失敗しない想定");
         prop_assert!(matches!(lower, RtspMethod::Extension(_)));
     }
 }

@@ -163,8 +163,9 @@ mod tests {
 
     #[test]
     fn test_parse_single_stream() {
-        let info =
-            RtpInfo::parse("url=rtsp://example.com/audio;seq=1234;rtptime=12345678").unwrap();
+        // 有効な RTP-Info なのでパースに失敗しない想定
+        let info = RtpInfo::parse("url=rtsp://example.com/audio;seq=1234;rtptime=12345678")
+            .expect("有効な RTP-Info なのでパースに失敗しない想定");
         assert_eq!(info.streams.len(), 1);
         assert_eq!(info.streams[0].url, "rtsp://example.com/audio");
         assert_eq!(info.streams[0].seq, Some(1234));
@@ -175,7 +176,7 @@ mod tests {
     fn test_parse_multiple_streams() {
         let info = RtpInfo::parse(
             "url=rtsp://example.com/audio;seq=100;rtptime=1000,url=rtsp://example.com/video;seq=200;rtptime=2000"
-        ).unwrap();
+        ).expect("有効な RTP-Info なのでパースに失敗しない想定");
         assert_eq!(info.streams.len(), 2);
 
         assert_eq!(info.streams[0].url, "rtsp://example.com/audio");
@@ -187,7 +188,8 @@ mod tests {
 
     #[test]
     fn test_parse_without_optional() {
-        let info = RtpInfo::parse("url=rtsp://example.com/stream").unwrap();
+        let info = RtpInfo::parse("url=rtsp://example.com/stream")
+            .expect("有効な RTP-Info なのでパースに失敗しない想定");
         assert_eq!(info.streams.len(), 1);
         assert_eq!(info.streams[0].url, "rtsp://example.com/stream");
         assert!(info.streams[0].seq.is_none());
@@ -219,15 +221,21 @@ mod tests {
         let info = RtpInfo::parse(
             "url=rtsp://example.com/audio;seq=100,url=rtsp://example.com/video;seq=200",
         )
-        .unwrap();
+        .expect("有効な RTP-Info なのでパースに失敗しない想定");
 
         let audio = info.find_by_url("rtsp://example.com/audio");
         assert!(audio.is_some());
-        assert_eq!(audio.unwrap().seq, Some(100));
+        assert_eq!(
+            audio.expect("URL は登録済みなので取得できる想定").seq,
+            Some(100)
+        );
 
         let video = info.find_by_url("rtsp://example.com/video");
         assert!(video.is_some());
-        assert_eq!(video.unwrap().seq, Some(200));
+        assert_eq!(
+            video.expect("URL は登録済みなので取得できる想定").seq,
+            Some(200)
+        );
 
         let unknown = info.find_by_url("rtsp://example.com/unknown");
         assert!(unknown.is_none());

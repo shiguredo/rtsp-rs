@@ -6,11 +6,17 @@ license = "Apache-2.0"
 publish = false
 
 [dependencies]
-base64 = "0.22"
+# SDP fmtp の sprop-parameter-sets の base64 デコードに使う (decode_vec に alloc フィーチャーが必要)
+base64ct = { version = "1.8", features = ["alloc"] }
+# 映像表示 (video-display フィーチャー) に使う
 raw_player = { version = "2026.2.0-canary.0", optional = true }
+# RTSP リクエスト・レスポンスのパース・エンコードに使う
 shiguredo_http11 = "2026.6"
+# MP4 録画 (mp4_recorder) に使う
 shiguredo_mp4 = "2026.3"
+# OpenH264 による H.264 デコード (video-display フィーチャー) に使う
 shiguredo_openh264 = { version = "2026.1", optional = true }
+# テスト対象のクレート
 shiguredo_rtsp = { path = "../.." }
 
 [features]

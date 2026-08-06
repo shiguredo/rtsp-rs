@@ -15,5 +15,7 @@ members = ["examples/rtsp_client", "pbt"]
 exclude = ["fuzz"]
 
 [dependencies]
+# Digest 認証 (RFC 2617) のハッシュ計算に使う
 md-5 = "0.11"
+# RTSP は HTTP/1.1 の構文を踏襲するため、メッセージのパース・エンコードに使う
 shiguredo_http11 = { version = "2026.6" }

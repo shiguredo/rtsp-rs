@@ -60,7 +60,8 @@ impl AacDepacketizer {
         }
 
         // 各 AU Header をパースして AU サイズを取得する
-        let mut au_sizes = Vec::with_capacity(au_count);
+        // au_count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+        let mut au_sizes = Vec::new();
         let header_data = &payload[2..au_headers_bytes];
         let mut bit_offset: usize = 0;
 

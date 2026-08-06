@@ -52,7 +52,9 @@ proptest! {
         }
         request.push_str("\r\n");
 
-        decoder.feed(request.as_bytes()).unwrap();
+        decoder
+            .feed(request.as_bytes())
+            .expect("有効なリクエストなのでフィードに失敗しない想定");
         let result = decoder.decode();
         prop_assert!(result.is_err());
     }
@@ -70,10 +72,14 @@ proptest! {
         }
         request.push_str("\r\n");
 
-        decoder.feed(request.as_bytes()).unwrap();
+        decoder
+            .feed(request.as_bytes())
+            .expect("有効なリクエストなのでフィードに失敗しない想定");
         let result = decoder.decode();
         prop_assert!(result.is_ok());
-        prop_assert!(result.unwrap().is_some());
+        prop_assert!(result
+            .expect("デコードはエラーにならない想定")
+            .is_some());
     }
 
     /// ボディサイズ制限を超えるとエラーになることを確認
@@ -88,7 +94,9 @@ proptest! {
             body_size
         );
 
-        decoder.feed(request.as_bytes()).unwrap();
+        decoder
+            .feed(request.as_bytes())
+            .expect("有効なリクエストなのでフィードに失敗しない想定");
         let result = decoder.decode();
         prop_assert!(result.is_err());
     }
@@ -106,11 +114,17 @@ proptest! {
             body_size
         );
 
-        decoder.feed(request.as_bytes()).unwrap();
-        decoder.feed(&body).unwrap();
+        decoder
+            .feed(request.as_bytes())
+            .expect("有効なリクエストなのでフィードに失敗しない想定");
+        decoder
+            .feed(&body)
+            .expect("有効なデータなのでフィードに失敗しない想定");
         let result = decoder.decode();
         prop_assert!(result.is_ok());
-        let req = result.unwrap().unwrap();
+        let req = result
+            .expect("デコードはエラーにならない想定")
+            .expect("完全なデータなのでデコード結果が得られる想定");
         prop_assert_eq!(req.body_bytes().map(<[_]>::len).unwrap_or(0), body_size);
     }
 
@@ -127,7 +141,9 @@ proptest! {
             value
         );
 
-        decoder.feed(request.as_bytes()).unwrap();
+        decoder
+            .feed(request.as_bytes())
+            .expect("有効なリクエストなのでフィードに失敗しない想定");
         let result = decoder.decode();
         prop_assert!(result.is_err());
     }
@@ -200,24 +216,32 @@ proptest! {
         header_count in 0usize..3usize,
         body_size in 0usize..100usize
     ) {
-        let method = Method::new(method.as_str()).unwrap();
-        let mut request = Request::with_version(method, &uri, "RTSP/1.0").unwrap();
+        let method = Method::new(method.as_str())
+            .expect("有効なトークンなので生成に失敗しない想定");
+        let mut request = Request::with_version(method, &uri, "RTSP/1.0")
+            .expect("有効な URI ・バージョンなので生成に失敗しない想定");
         for i in 0..header_count {
-            let header_name = HeaderName::new(format!("H{}", i)).unwrap();
+            let header_name = HeaderName::new(format!("H{}", i))
+                .expect("有効なヘッダー名なので生成に失敗しない想定");
             request = request
                 .header(header_name, format!("v{}", i))
-                .unwrap();
+                .expect("有効なヘッダーなので設定に失敗しない想定");
         }
         if body_size > 0 {
             request = request.body(vec![b'x'; body_size]);
         }
 
-        let encoded = encode_request(&request).unwrap();
+        let encoded = encode_request(&request)
+            .expect("有効なリクエストなのでエンコードに失敗しない想定");
 
         // デフォルト制限でデコードできることを確認
         let mut decoder = RequestDecoder::new();
-        decoder.feed(&encoded).unwrap();
-        let decoded = decoder.decode().unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定");
         prop_assert!(decoded.is_some());
     }
 
@@ -227,12 +251,14 @@ proptest! {
         header_count in 0usize..3usize,
         body_size in 0usize..100usize
     ) {
-        let mut response = Response::with_version("RTSP/1.0", status_code, "OK").unwrap();
+        let mut response = Response::with_version("RTSP/1.0", status_code, "OK")
+            .expect("有効なバージョン・ステータスコードなので生成に失敗しない想定");
         for i in 0..header_count {
-            let header_name = HeaderName::new(format!("H{}", i)).unwrap();
+            let header_name = HeaderName::new(format!("H{}", i))
+                .expect("有効なヘッダー名なので生成に失敗しない想定");
             response = response
                 .header(header_name, format!("v{}", i))
-                .unwrap();
+                .expect("有効なヘッダーなので設定に失敗しない想定");
         }
         if body_size > 0 {
             response = response.body(vec![b'x'; body_size]);
@@ -240,12 +266,17 @@ proptest! {
             response = response.body(Vec::new());
         }
 
-        let encoded = encode_response(&response).unwrap();
+        let encoded = encode_response(&response)
+            .expect("有効なレスポンスなのでエンコードに失敗しない想定");
 
         // デフォルト制限でデコードできることを確認
         let mut decoder = ResponseDecoder::new();
-        decoder.feed(&encoded).unwrap();
-        let decoded = decoder.decode().unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定");
         prop_assert!(decoded.is_some());
     }
 }

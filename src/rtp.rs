@@ -124,7 +124,8 @@ impl RtpPacket {
         let ssrc = buf.read_u32()?;
 
         // CSRC list
-        let mut csrc = Vec::with_capacity(csrc_count as usize);
+        // csrc_count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+        let mut csrc = Vec::new();
         for _ in 0..csrc_count {
             csrc.push(buf.read_u32()?);
         }
@@ -258,7 +259,8 @@ mod tests {
         let packet = RtpPacket::new(header, vec![0x01, 0x02, 0x03, 0x04]);
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtpPacket::parse(&encoded).expect("RTP のパースに失敗しない想定");
 
         assert_eq!(decoded.header.version, 2);
         assert_eq!(decoded.header.payload_type, 96);
@@ -275,7 +277,8 @@ mod tests {
         let packet = RtpPacket::new(header, vec![0xFF]);
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtpPacket::parse(&encoded).expect("RTP のパースに失敗しない想定");
 
         assert!(decoded.header.marker);
     }
@@ -287,7 +290,8 @@ mod tests {
         let packet = RtpPacket::new(header, vec![0xAA]);
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtpPacket::parse(&encoded).expect("RTP のパースに失敗しない想定");
 
         assert_eq!(decoded.header.csrc.len(), 2);
         assert_eq!(decoded.header.csrc[0], 0x11111111);

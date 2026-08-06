@@ -11,11 +11,16 @@ fn build_request(
     headers: &[(String, String)],
     body: Option<Vec<u8>>,
 ) -> Request {
-    let method = Method::new(method).unwrap();
-    let mut request = Request::with_version(method, uri, version).unwrap();
+    // 各引数は有効なトークン・URI ・ヘッダーを生成する strategy 由来なので失敗しない想定
+    let method = Method::new(method).expect("有効なトークンなので生成に失敗しない想定");
+    let mut request = Request::with_version(method, uri, version)
+        .expect("有効な URI ・バージョンなので生成に失敗しない想定");
     for (name, value) in headers {
-        let header_name = HeaderName::new(name.as_str()).unwrap();
-        request = request.header(header_name, value.as_str()).unwrap();
+        let header_name =
+            HeaderName::new(name.as_str()).expect("有効なヘッダー名なので生成に失敗しない想定");
+        request = request
+            .header(header_name, value.as_str())
+            .expect("有効なヘッダーなので設定に失敗しない想定");
     }
     if let Some(body) = body {
         request = request.body(body);
@@ -30,10 +35,14 @@ fn build_response(
     headers: &[(String, String)],
     body: Option<Vec<u8>>,
 ) -> Response {
-    let mut response = Response::with_version(version, status_code, reason_phrase).unwrap();
+    let mut response = Response::with_version(version, status_code, reason_phrase)
+        .expect("有効なバージョン・ステータスコードなので生成に失敗しない想定");
     for (name, value) in headers {
-        let header_name = HeaderName::new(name.as_str()).unwrap();
-        response = response.header(header_name, value.as_str()).unwrap();
+        let header_name =
+            HeaderName::new(name.as_str()).expect("有効なヘッダー名なので生成に失敗しない想定");
+        response = response
+            .header(header_name, value.as_str())
+            .expect("有効なヘッダーなので設定に失敗しない想定");
     }
     if let Some(body) = body {
         response = response.body(body);
@@ -46,14 +55,14 @@ fn build_response(
 /// 有効な HTTP トークン文字列を生成 (制御文字やセパレータを除く)
 fn valid_token() -> impl Strategy<Value = String> {
     prop::string::string_regex("[a-zA-Z][a-zA-Z0-9_-]{0,30}")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("non-empty", |s| !s.is_empty())
 }
 
 /// 有効な URI 文字列を生成
 fn valid_uri() -> impl Strategy<Value = String> {
     prop::string::string_regex("rtsp://[a-z0-9.-]+/[a-zA-Z0-9/_.-]*")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("non-empty", |s| !s.is_empty())
 }
 
@@ -67,13 +76,14 @@ fn valid_version() -> impl Strategy<Value = String> {
 /// 有効なヘッダー名を生成
 fn valid_header_name() -> impl Strategy<Value = String> {
     prop::string::string_regex("[A-Za-z][A-Za-z0-9-]{0,20}")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("non-empty", |s| !s.is_empty())
 }
 
 /// 有効なヘッダー値を生成 (CRLF を含まない)
 fn valid_header_value() -> impl Strategy<Value = String> {
-    prop::string::string_regex("[a-zA-Z0-9 ,;:=/_.-]{0,100}").unwrap()
+    prop::string::string_regex("[a-zA-Z0-9 ,;:=/_.-]{0,100}")
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
 }
 
 /// ヘッダーリストを生成 (Content-Length, Transfer-Encoding を除外)
@@ -125,11 +135,17 @@ proptest! {
     ) {
         let request = build_request(&method, &uri, &version, &headers, None);
 
-        let encoded = encode_request(&request).unwrap();
+        let encoded = encode_request(&request)
+            .expect("有効なリクエストなのでエンコードに失敗しない想定");
         let mut decoder = RequestDecoder::new();
-        decoder.feed(&encoded).unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
 
-        let decoded = decoder.decode().unwrap().unwrap();
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定")
+            .expect("完全なデータなのでデコード結果が得られる想定");
 
         prop_assert_eq!(decoded.method(), &method);
         prop_assert_eq!(decoded.uri(), &uri);
@@ -150,11 +166,17 @@ proptest! {
     ) {
         let request = build_request(&method, &uri, &version, &headers, Some(body.clone()));
 
-        let encoded = encode_request(&request).unwrap();
+        let encoded = encode_request(&request)
+            .expect("有効なリクエストなのでエンコードに失敗しない想定");
         let mut decoder = RequestDecoder::new();
-        decoder.feed(&encoded).unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
 
-        let decoded = decoder.decode().unwrap().unwrap();
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定")
+            .expect("完全なデータなのでデコード結果が得られる想定");
 
         prop_assert_eq!(decoded.method(), &method);
         prop_assert_eq!(decoded.uri(), &uri);
@@ -174,11 +196,17 @@ proptest! {
     ) {
         let response = build_response(&version, status_code, &reason_phrase, &headers, None);
 
-        let encoded = encode_response(&response).unwrap();
+        let encoded = encode_response(&response)
+            .expect("有効なレスポンスなのでエンコードに失敗しない想定");
         let mut decoder = ResponseDecoder::new();
-        decoder.feed(&encoded).unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
 
-        let decoded = decoder.decode().unwrap().unwrap();
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定")
+            .expect("完全なデータなのでデコード結果が得られる想定");
 
         prop_assert_eq!(decoded.version(), &version);
         prop_assert_eq!(decoded.status_code(), status_code);
@@ -205,11 +233,17 @@ proptest! {
             Some(body.clone()),
         );
 
-        let encoded = encode_response(&response).unwrap();
+        let encoded = encode_response(&response)
+            .expect("有効なレスポンスなのでエンコードに失敗しない想定");
         let mut decoder = ResponseDecoder::new();
-        decoder.feed(&encoded).unwrap();
+        decoder
+            .feed(&encoded)
+            .expect("有効なデータなのでフィードに失敗しない想定");
 
-        let decoded = decoder.decode().unwrap().unwrap();
+        let decoded = decoder
+            .decode()
+            .expect("有効なデータなのでデコードに失敗しない想定")
+            .expect("完全なデータなのでデコード結果が得られる想定");
 
         prop_assert_eq!(decoded.version(), &version);
         prop_assert_eq!(decoded.status_code(), status_code);
@@ -225,23 +259,32 @@ proptest! {
         method in valid_token(),
         uri in valid_uri(),
     ) {
-        let method = Method::new(method.as_str()).unwrap();
-        let request = Request::with_version(method.clone(), &uri, "RTSP/1.0").unwrap();
-        let encoded = encode_request(&request).unwrap();
+        let method = Method::new(method.as_str())
+            .expect("有効なトークンなので生成に失敗しない想定");
+        let request = Request::with_version(method.clone(), &uri, "RTSP/1.0")
+            .expect("有効な URI ・バージョンなので生成に失敗しない想定");
+        let encoded = encode_request(&request)
+            .expect("有効なリクエストなのでエンコードに失敗しない想定");
 
         let mut decoder = RequestDecoder::new();
 
         // 1 バイトずつ feed
         for (i, byte) in encoded.iter().enumerate() {
-            decoder.feed(&[*byte]).unwrap();
+            decoder
+                .feed(&[*byte])
+                .expect("有効なデータなのでフィードに失敗しない想定");
             let result = decoder.decode();
 
             if i < encoded.len() - 1 {
                 // まだ完了していない
-                prop_assert!(result.unwrap().is_none());
+                prop_assert!(result
+                    .expect("デコードはエラーにならない想定")
+                    .is_none());
             } else {
                 // 最後のバイトで完了
-                let decoded = result.unwrap().unwrap();
+                let decoded = result
+                    .expect("デコードはエラーにならない想定")
+                    .expect("最後のバイトで完了する想定");
                 prop_assert_eq!(decoded.method(), &method);
                 prop_assert_eq!(decoded.uri(), &uri);
             }

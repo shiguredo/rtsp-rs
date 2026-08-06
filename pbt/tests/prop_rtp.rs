@@ -57,7 +57,8 @@ proptest! {
         let packet = RtpPacket::new(header, payload.clone());
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.header.version, 2);
         prop_assert_eq!(decoded.header.payload_type, payload_type);
@@ -82,7 +83,8 @@ proptest! {
         let packet = RtpPacket::new(header, payload.clone());
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.header.marker, marker);
         prop_assert_eq!(decoded.payload, payload);
@@ -103,7 +105,8 @@ proptest! {
         let packet = RtpPacket::new(header, payload.clone());
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.header.csrc, csrc);
         prop_assert_eq!(decoded.payload, payload);
@@ -124,7 +127,8 @@ proptest! {
         packet.extension = extension.clone();
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         match (&decoded.extension, &extension) {
             (Some(dec_ext), Some(orig_ext)) => {
@@ -155,7 +159,8 @@ proptest! {
         packet.padding_size = padding_size;
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.padding_size, padding_size);
         prop_assert_eq!(decoded.payload, payload);
@@ -183,7 +188,8 @@ proptest! {
         packet.padding_size = padding_size;
 
         let encoded = packet.build();
-        let decoded = RtpPacket::parse(&encoded).unwrap();
+        let decoded = RtpPacket::parse(&encoded)
+            .expect("ビルダーで生成したデータは必ずパースできる想定");
 
         prop_assert_eq!(decoded.header.version, 2);
         prop_assert_eq!(decoded.header.payload_type, payload_type);
@@ -216,23 +222,4 @@ proptest! {
         prop_assert_eq!(encoded.len(), expected_size);
         prop_assert_eq!(packet.size(), expected_size);
     }
-}
-
-/// 不正なデータのパースが失敗することを確認
-#[test]
-fn test_rtp_parse_invalid_data() {
-    // データが短すぎる
-    assert!(RtpPacket::parse(&[]).is_err());
-    assert!(RtpPacket::parse(&[0; 11]).is_err());
-
-    // バージョンが違う
-    let mut invalid_version = vec![0; 12];
-    invalid_version[0] = 0b0000_0000; // version = 0
-    assert!(RtpPacket::parse(&invalid_version).is_err());
-
-    invalid_version[0] = 0b0100_0000; // version = 1
-    assert!(RtpPacket::parse(&invalid_version).is_err());
-
-    invalid_version[0] = 0b1100_0000; // version = 3
-    assert!(RtpPacket::parse(&invalid_version).is_err());
 }

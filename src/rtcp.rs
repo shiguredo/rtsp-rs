@@ -174,7 +174,8 @@ impl RtcpPacket {
                 let packet_count = packet_buf.read_u32()?;
                 let octet_count = packet_buf.read_u32()?;
 
-                let mut reports = Vec::with_capacity(count as usize);
+                // count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+                let mut reports = Vec::new();
                 for _ in 0..count {
                     reports.push(Self::parse_report_block(&mut packet_buf)?);
                 }
@@ -191,7 +192,8 @@ impl RtcpPacket {
             RTCP_PT_RR => {
                 let ssrc = packet_buf.read_u32()?;
 
-                let mut reports = Vec::with_capacity(count as usize);
+                // count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+                let mut reports = Vec::new();
                 for _ in 0..count {
                     reports.push(Self::parse_report_block(&mut packet_buf)?);
                 }
@@ -202,7 +204,8 @@ impl RtcpPacket {
                 }))
             }
             RTCP_PT_SDES => {
-                let mut chunks = Vec::with_capacity(count as usize);
+                // count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+                let mut chunks = Vec::new();
                 for _ in 0..count {
                     if packet_buf.len() < 4 {
                         break;
@@ -294,7 +297,8 @@ impl RtcpPacket {
                 Ok(RtcpPacket::SourceDescription(RtcpSdes { chunks }))
             }
             RTCP_PT_BYE => {
-                let mut ssrcs = Vec::with_capacity(count as usize);
+                // count は入力データ由来のため、容量を事前確保せず Vec::new() で安全に積む
+                let mut ssrcs = Vec::new();
                 for _ in 0..count {
                     if packet_buf.len() < 4 {
                         break;
@@ -512,7 +516,8 @@ mod tests {
 
         let packets = vec![RtcpPacket::SenderReport(sr.clone())];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtcpPacket::parse(&encoded).expect("SR のパースに失敗しない想定");
 
         assert_eq!(decoded.len(), 1);
         if let RtcpPacket::SenderReport(decoded_sr) = &decoded[0] {
@@ -537,7 +542,8 @@ mod tests {
 
         let packets = vec![RtcpPacket::SourceDescription(sdes)];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtcpPacket::parse(&encoded).expect("SDES のパースに失敗しない想定");
 
         assert_eq!(decoded.len(), 1);
         if let RtcpPacket::SourceDescription(decoded_sdes) = &decoded[0] {
@@ -562,7 +568,8 @@ mod tests {
 
         let packets = vec![RtcpPacket::Bye(bye)];
         let encoded = RtcpPacket::build(&packets);
-        let decoded = RtcpPacket::parse(&encoded).unwrap();
+        // ビルダーで生成したデータは必ずパースできる想定
+        let decoded = RtcpPacket::parse(&encoded).expect("BYE のパースに失敗しない想定");
 
         assert_eq!(decoded.len(), 1);
         if let RtcpPacket::Bye(decoded_bye) = &decoded[0] {

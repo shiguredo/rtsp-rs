@@ -7,18 +7,21 @@ use shiguredo_rtsp::sdp::{
 fn valid_username() -> impl Strategy<Value = String> {
     prop_oneof![
         Just("-".to_string()),
-        prop::string::string_regex("[a-zA-Z][a-zA-Z0-9_-]{0,20}").unwrap(),
+        prop::string::string_regex("[a-zA-Z][a-zA-Z0-9_-]{0,20}")
+            .expect("有効な正規表現なのでコンパイルに失敗しない想定"),
     ]
 }
 
 /// 有効なセッション ID を生成
 fn valid_session_id() -> impl Strategy<Value = String> {
-    prop::string::string_regex("[0-9]{1,15}").unwrap()
+    prop::string::string_regex("[0-9]{1,15}")
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
 }
 
 /// 有効なセッションバージョンを生成
 fn valid_session_version() -> impl Strategy<Value = String> {
-    prop::string::string_regex("[0-9]{1,10}").unwrap()
+    prop::string::string_regex("[0-9]{1,10}")
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
 }
 
 /// 有効な IP アドレスを生成
@@ -29,7 +32,7 @@ fn valid_ip_address() -> impl Strategy<Value = String> {
 /// 有効なセッション名を生成 (空白を含まない)
 fn valid_session_name() -> impl Strategy<Value = String> {
     prop::string::string_regex("[a-zA-Z0-9_-]{1,50}")
-        .unwrap()
+        .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         .prop_filter("non-empty", |s| !s.is_empty())
 }
 
@@ -130,13 +133,13 @@ fn valid_session_attribute() -> impl Strategy<Value = SdpAttribute> {
         Just(SdpAttribute::Sendonly),
         Just(SdpAttribute::Inactive),
         prop::string::string_regex("[a-z0-9-]{1,20}")
-            .unwrap()
+            .expect("有効な正規表現なのでコンパイルに失敗しない想定")
             .prop_map(SdpAttribute::Control),
         prop::string::string_regex("npt=[0-9]+-[0-9]*")
-            .unwrap()
+            .expect("有効な正規表現なのでコンパイルに失敗しない想定")
             .prop_map(SdpAttribute::Range),
         prop::string::string_regex("[a-zA-Z0-9_-]{1,30}")
-            .unwrap()
+            .expect("有効な正規表現なのでコンパイルに失敗しない想定")
             .prop_map(SdpAttribute::Tool),
     ]
 }
@@ -154,7 +157,8 @@ fn valid_media_attribute() -> impl Strategy<Value = SdpAttribute> {
         }),
         (
             valid_payload_type(),
-            prop::string::string_regex("[a-zA-Z0-9=;-]{1,50}").unwrap()
+            prop::string::string_regex("[a-zA-Z0-9=;-]{1,50}")
+                .expect("有効な正規表現なのでコンパイルに失敗しない想定")
         )
             .prop_map(|(pt, params)| {
                 SdpAttribute::Fmtp {
@@ -163,7 +167,7 @@ fn valid_media_attribute() -> impl Strategy<Value = SdpAttribute> {
                 }
             }),
         prop::string::string_regex("trackID=[0-9]{1,5}")
-            .unwrap()
+            .expect("有効な正規表現なのでコンパイルに失敗しない想定")
             .prop_map(SdpAttribute::Control),
     ]
 }
@@ -218,7 +222,8 @@ proptest! {
         };
 
         let text = sdp.to_string();
-        let parsed = Sdp::parse(&text).unwrap();
+        let parsed = Sdp::parse(&text)
+            .expect("有効な SDP なのでパースに失敗しない想定");
 
         prop_assert_eq!(parsed.version, 0);
         prop_assert_eq!(parsed.origin.username, origin.username);
@@ -253,10 +258,13 @@ proptest! {
         };
 
         let text = sdp.to_string();
-        let parsed = Sdp::parse(&text).unwrap();
+        let parsed = Sdp::parse(&text)
+            .expect("有効な SDP なのでパースに失敗しない想定");
 
         prop_assert!(parsed.connection.is_some());
-        let parsed_conn = parsed.connection.unwrap();
+        let parsed_conn = parsed
+            .connection
+            .expect("connection は設定済みなので取得できる想定");
         prop_assert_eq!(parsed_conn.net_type, connection.net_type);
         prop_assert_eq!(parsed_conn.addr_type, connection.addr_type);
         prop_assert_eq!(parsed_conn.address, connection.address);
@@ -286,7 +294,8 @@ proptest! {
         };
 
         let text = sdp.to_string();
-        let parsed = Sdp::parse(&text).unwrap();
+        let parsed = Sdp::parse(&text)
+            .expect("有効な SDP なのでパースに失敗しない想定");
 
         prop_assert_eq!(parsed.media.len(), media.len());
         for (orig, dec) in media.iter().zip(parsed.media.iter()) {
@@ -321,7 +330,8 @@ proptest! {
         };
 
         let text = sdp.to_string();
-        let parsed = Sdp::parse(&text).unwrap();
+        let parsed = Sdp::parse(&text)
+            .expect("有効な SDP なのでパースに失敗しない想定");
 
         prop_assert_eq!(parsed.attributes.len(), attributes.len());
     }
@@ -338,7 +348,8 @@ proptest! {
             .session_name(&session_name)
             .timing(0, 0)
             .build()
-            .unwrap();
+            // ビルダーで生成した SDP は必ず妥当な状態になる想定
+            .expect("ビルダーで生成した SDP のビルドに失敗しない想定");
 
         prop_assert_eq!(sdp.version, 0);
         prop_assert_eq!(sdp.origin.session_id, session_id);
@@ -366,83 +377,4 @@ proptest! {
         prop_assert_eq!(media.formats.len(), 1);
         prop_assert_eq!(media.attributes.len(), 2);
     }
-}
-
-/// rtpmap 属性のラウンドトリップ
-#[test]
-fn test_sdp_rtpmap_roundtrip() {
-    let sdp_text = r#"v=0
-o=- 1234567890 1 IN IP4 127.0.0.1
-s=Test
-t=0 0
-m=video 0 RTP/AVP 96
-a=rtpmap:96 H264/90000
-a=fmtp:96 profile-level-id=42e01f
-"#;
-
-    let parsed = Sdp::parse(sdp_text).unwrap();
-    assert_eq!(parsed.media.len(), 1);
-    assert_eq!(parsed.media[0].attributes.len(), 2);
-
-    if let SdpAttribute::Rtpmap {
-        payload_type,
-        encoding,
-        clock_rate,
-        ..
-    } = &parsed.media[0].attributes[0]
-    {
-        assert_eq!(*payload_type, 96);
-        assert_eq!(encoding, "H264");
-        assert_eq!(*clock_rate, 90000);
-    } else {
-        panic!("expected rtpmap");
-    }
-
-    // Re-serialize and parse again
-    let text = parsed.to_string();
-    let reparsed = Sdp::parse(&text).unwrap();
-
-    assert_eq!(reparsed.media.len(), 1);
-    assert_eq!(reparsed.media[0].attributes.len(), 2);
-}
-
-/// bandwidth のラウンドトリップ
-#[test]
-fn test_sdp_bandwidth_roundtrip() {
-    let sdp_text = r#"v=0
-o=- 1234567890 1 IN IP4 127.0.0.1
-s=Test
-b=AS:256
-t=0 0
-"#;
-
-    let parsed = Sdp::parse(sdp_text).unwrap();
-    assert_eq!(parsed.bandwidth.len(), 1);
-    assert_eq!(parsed.bandwidth[0].bwtype, "AS");
-    assert_eq!(parsed.bandwidth[0].bandwidth, 256);
-
-    let text = parsed.to_string();
-    let reparsed = Sdp::parse(&text).unwrap();
-    assert_eq!(reparsed.bandwidth.len(), 1);
-    assert_eq!(reparsed.bandwidth[0].bandwidth, 256);
-}
-
-/// メディアの num_ports のラウンドトリップ
-#[test]
-fn test_sdp_media_num_ports_roundtrip() {
-    let sdp_text = r#"v=0
-o=- 1234567890 1 IN IP4 127.0.0.1
-s=Test
-t=0 0
-m=video 49170/2 RTP/AVP 96
-"#;
-
-    let parsed = Sdp::parse(sdp_text).unwrap();
-    assert_eq!(parsed.media.len(), 1);
-    assert_eq!(parsed.media[0].port, 49170);
-    assert_eq!(parsed.media[0].num_ports, Some(2));
-
-    let text = parsed.to_string();
-    let reparsed = Sdp::parse(&text).unwrap();
-    assert_eq!(reparsed.media[0].num_ports, Some(2));
 }

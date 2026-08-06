@@ -5,8 +5,11 @@ edition = "2024"
 publish = false
 
 [dependencies]
+# PBT (Property-Based Testing) フレームワーク
 proptest = "1.11"
 
 [dev-dependencies]
+# HTTP/1.1 メッセージの PBT で shiguredo_rtsp と組み合わせて使う
 shiguredo_http11 = { version = "2026.6" }
+# テスト対象のクレート
 shiguredo_rtsp = { path = "../" }

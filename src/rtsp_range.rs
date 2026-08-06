@@ -361,7 +361,7 @@ mod tests {
     #[test]
     fn test_npt_parse() {
         // Simple seconds
-        let range = RtspRange::parse("npt=0-").unwrap();
+        let range = RtspRange::parse("npt=0-").expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Npt(npt) = range {
             assert!(matches!(npt.start, NptTime::Seconds(s) if s == 0.0));
             assert!(npt.end.is_none());
@@ -370,7 +370,8 @@ mod tests {
         }
 
         // Seconds with decimal
-        let range = RtspRange::parse("npt=10.5-20.3").unwrap();
+        let range =
+            RtspRange::parse("npt=10.5-20.3").expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Npt(npt) = range {
             assert!(matches!(npt.start, NptTime::Seconds(s) if (s - 10.5).abs() < 0.001));
             assert!(matches!(npt.end, Some(NptTime::Seconds(s)) if (s - 20.3).abs() < 0.001));
@@ -379,7 +380,8 @@ mod tests {
         }
 
         // now
-        let range = RtspRange::parse("npt=now-").unwrap();
+        let range =
+            RtspRange::parse("npt=now-").expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Npt(npt) = range {
             assert!(matches!(npt.start, NptTime::Now));
         } else {
@@ -387,7 +389,8 @@ mod tests {
         }
 
         // hh:mm:ss format
-        let range = RtspRange::parse("npt=0:10:30-").unwrap();
+        let range =
+            RtspRange::parse("npt=0:10:30-").expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Npt(npt) = range {
             // 0 hours + 10 minutes + 30 seconds = 630 seconds
             assert!(matches!(npt.start, NptTime::Seconds(s) if (s - 630.0).abs() < 0.001));
@@ -398,7 +401,8 @@ mod tests {
 
     #[test]
     fn test_smpte_parse() {
-        let range = RtspRange::parse("smpte=0:10:20:00-0:20:30:00").unwrap();
+        let range = RtspRange::parse("smpte=0:10:20:00-0:20:30:00")
+            .expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Smpte(smpte) = range {
             assert_eq!(smpte.start.hours, 0);
             assert_eq!(smpte.start.minutes, 10);
@@ -411,7 +415,8 @@ mod tests {
 
     #[test]
     fn test_clock_parse() {
-        let range = RtspRange::parse("clock=19960213T143205Z-").unwrap();
+        let range = RtspRange::parse("clock=19960213T143205Z-")
+            .expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Clock(clock) = range {
             assert_eq!(clock.start, "19960213T143205Z");
             assert!(clock.end.is_none());
@@ -423,7 +428,8 @@ mod tests {
     #[test]
     fn test_npt_reverse_range() {
         // "-" npt-time 形式
-        let range = RtspRange::parse("npt=-30.5").unwrap();
+        let range =
+            RtspRange::parse("npt=-30.5").expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Npt(npt) = range {
             assert!(matches!(npt.start, NptTime::Seconds(s) if s == 0.0));
             assert!(matches!(npt.end, Some(NptTime::Seconds(s)) if (s - 30.5).abs() < 0.001));
@@ -438,7 +444,8 @@ mod tests {
     #[test]
     fn test_smpte_type_preserved() {
         // smpte
-        let range = RtspRange::parse("smpte=0:10:20:00-").unwrap();
+        let range = RtspRange::parse("smpte=0:10:20:00-")
+            .expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Smpte(smpte) = &range {
             assert_eq!(smpte.smpte_type, SmpteType::Smpte);
         } else {
@@ -447,7 +454,8 @@ mod tests {
         assert_eq!(range.to_string(), "smpte=00:10:20:00-");
 
         // smpte-30-drop
-        let range = RtspRange::parse("smpte-30-drop=0:10:20:00-").unwrap();
+        let range = RtspRange::parse("smpte-30-drop=0:10:20:00-")
+            .expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Smpte(smpte) = &range {
             assert_eq!(smpte.smpte_type, SmpteType::Smpte30Drop);
         } else {
@@ -456,7 +464,8 @@ mod tests {
         assert_eq!(range.to_string(), "smpte-30-drop=00:10:20:00-");
 
         // smpte-25
-        let range = RtspRange::parse("smpte-25=0:10:20:00-").unwrap();
+        let range = RtspRange::parse("smpte-25=0:10:20:00-")
+            .expect("有効な Range なのでパースに失敗しない想定");
         if let RtspRange::Smpte(smpte) = &range {
             assert_eq!(smpte.smpte_type, SmpteType::Smpte25);
         } else {

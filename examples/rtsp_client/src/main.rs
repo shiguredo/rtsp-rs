@@ -13,8 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(feature = "video-display")]
 use std::sync::mpsc;
 
-use base64::Engine;
-use base64::engine::general_purpose::STANDARD as BASE64;
+use base64ct::{Base64, Encoding};
 use shiguredo_http11::auth::DigestChallenge;
 use shiguredo_http11::uri::Uri;
 use shiguredo_rtsp::sdp::SdpAttribute;
@@ -55,8 +54,8 @@ fn parse_sprop_parameter_sets(parameters: &str) -> Option<(Vec<u8>, Vec<u8>)> {
     let value = get_fmtp_param(parameters, "sprop-parameter-sets")?;
     let parts: Vec<&str> = value.split(',').collect();
     if parts.len() >= 2 {
-        let sps = BASE64.decode(parts[0].trim()).ok()?;
-        let pps = BASE64.decode(parts[1].trim()).ok()?;
+        let sps = Base64::decode_vec(parts[0].trim()).ok()?;
+        let pps = Base64::decode_vec(parts[1].trim()).ok()?;
         Some((sps, pps))
     } else {
         None
